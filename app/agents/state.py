@@ -31,6 +31,10 @@ class StockAnalysisState(TypedDict):
     bear_case: Optional[str]
     debate_summary: Optional[str]
 
+    # 投资者人格分析结果
+    investor_opinions: Optional[Dict[str, Any]]  # 各投资者的建议汇总
+    investor_consensus: Optional[str]  # 投资者共识(BUY/SELL/HOLD)
+
     # 风险与决策
     risk_assessment: Optional[Dict[str, Any]]
     final_decision: Optional[Dict[str, Any]]  # {action, reasoning, confidence, price_targets}

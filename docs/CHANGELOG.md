@@ -1,5 +1,37 @@
 # 版本更新记录
 
+## v2.2.0 (2026-03-22)
+
+### 全面Agent化改造
+- 新增 app/agents/ 多Agent分析子系统（LangGraph编排）
+- 9角色4层架构：技术/基本面/资金/情绪分析师 → 多空辩论 → 风控 → 决策
+- 投资者人格Agent：巴菲特/芒格/彼得林奇/达摩达兰 四大投资风格
+- LangGraph StateGraph动态深度路由（1-5级）
+- 特性开关 USE_AGENT_SYSTEM 控制新旧系统切换
+
+### 搜索引擎集成
+- 新增统一搜索层 app/core/search.py（DuckDuckGo→Tavily→SERP多源降级）
+- DuckDuckGo搜索免费无限制，无需API key
+
+### 基础设施增强
+- 新增 Redis统一缓存层 app/core/cache.py（Redis优先/内存降级）
+- 新增 Agent记忆系统 app/core/agent_memory.py（分析历史+经验学习）
+- 新增 事件总线 app/core/event_bus.py（Agent间事件通信）
+- 新增 Human-in-the-Loop app/agents/hitl.py（高风险决策人工审批）
+- 新增 MCP工具服务器 app/mcp/（标准化工具接口）
+
+### 安全与稳定性修复
+- CORS限制为环境变量白名单
+- 移除硬编码API密钥
+- 8个API端点添加股票代码验证
+- 统一AI客户端（超时180s/重试2次/友好错误消息）
+- akshare自适应列名映射 + 14处异常日志
+- baostock线程安全 + 动态季度
+- 新闻去重窗口扩大(7天) + 双字段去重
+- 前端XSS防护 + 全局AJAX超时60s
+
+---
+
 ## v2.1.2 (2025-12-16)
 
 ### 数据接口双层冗余架构

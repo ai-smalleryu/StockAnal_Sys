@@ -98,6 +98,22 @@ def get_stock_news(stock_code: str, limit: int = 5) -> str:
 
 
 @tool
+def search_web_tool(query: str, max_results: int = 5) -> str:
+    """搜索互联网获取最新信息（支持DuckDuckGo/Tavily/SERP多源降级）"""
+    from app.core.search import search_web
+    try:
+        results = search_web(query, max_results)
+        if not results:
+            return "未找到相关搜索结果"
+        output = []
+        for r in results:
+            output.append(f"[{r.get('source', '')}] {r.get('title', '')}: {r.get('content', '')[:150]}")
+        return '\n'.join(output)
+    except Exception as e:
+        return f"搜索失败: {str(e)}"
+
+
+@tool
 def get_risk_assessment(stock_code: str, market_type: str = 'A') -> str:
     """评估股票的多维度风险(波动率/趋势/反转/成交量风险)"""
     from app.analysis.risk_monitor import RiskMonitor
@@ -120,6 +136,7 @@ ALL_TOOLS = [
     get_fundamental_data,
     get_capital_flow,
     get_stock_news,
+    search_web_tool,
     get_risk_assessment,
 ]
 
@@ -127,5 +144,5 @@ ALL_TOOLS = [
 TECHNICAL_TOOLS = [get_stock_data, get_technical_indicators]
 FUNDAMENTAL_TOOLS = [get_fundamental_data]
 CAPITAL_FLOW_TOOLS = [get_capital_flow]
-SENTIMENT_TOOLS = [get_stock_news]
+SENTIMENT_TOOLS = [get_stock_news, search_web_tool]
 RISK_TOOLS = [get_risk_assessment]

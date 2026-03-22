@@ -13,6 +13,7 @@ from typing import List, Dict, Optional
 import pandas as pd
 
 from .fallback_manager import FallbackManager
+from .cache import get_cache
 from ..adapters.akshare_adapter import AkshareAdapter
 from ..adapters.baostock_adapter import BaostockAdapter
 
@@ -34,6 +35,7 @@ class DataProvider:
         if self._initialized:
             return
         self._init_adapters()
+        self._cache = get_cache()
         self._last_request_time = 0
         self._min_interval = 0.2  # 最小200ms间隔
         self._initialized = True
@@ -62,7 +64,17 @@ class DataProvider:
                           adjust: str = "qfq") -> pd.DataFrame:
         """获取股票历史K线"""
         self._rate_limit()
-        return self.fallback.execute('get_stock_history', code, start_date, end_date, adjust)
+
+        cache_key = f"history_{code}_{start_date}_{end_date}_{adjust}"
+        cached = self._cache.get(cache_key)
+        if cached is not None:
+            return pd.DataFrame(cached)
+
+        result = self.fallback.execute('get_stock_history', code, start_date, end_date, adjust)
+
+        if result is not None and not result.empty:
+            self._cache.set(cache_key, result.to_dict('records'), ttl=1800)
+        return result
 
     def get_index_stocks(self, index_code: str) -> List[str]:
         """获取指数成分股"""
@@ -72,12 +84,32 @@ class DataProvider:
     def get_stock_info(self, code: str) -> Dict:
         """获取股票基本信息"""
         self._rate_limit()
-        return self.fallback.execute('get_stock_info', code)
+
+        cache_key = f"info_{code}"
+        cached = self._cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        result = self.fallback.execute('get_stock_info', code)
+
+        if result:
+            self._cache.set(cache_key, result, ttl=3600)
+        return result
 
     def get_financial_data(self, code: str) -> Dict:
         """获取财务数据"""
         self._rate_limit()
-        return self.fallback.execute('get_financial_data', code)
+
+        cache_key = f"financial_{code}"
+        cached = self._cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        result = self.fallback.execute('get_financial_data', code)
+
+        if result:
+            self._cache.set(cache_key, result, ttl=3600)
+        return result
 
     # ========== akshare专有方法（无baostock备用）==========
 

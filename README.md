@@ -76,6 +76,19 @@
 │   │   ├── news_fetcher.py          # 新闻获取与缓存
 │   │   └── us_stock_service.py      # 美股服务
 │   │
+│   ├── agents/             # 多Agent分析子系统（LangGraph编排）
+│   │   ├── coordinator.py          # Agent协调器
+│   │   ├── technical_analyst.py    # 技术分析Agent
+│   │   ├── fundamental_analyst.py  # 基本面Agent
+│   │   ├── sentiment_analyst.py    # 情绪/新闻Agent
+│   │   ├── bull_researcher.py      # 看多研究员
+│   │   ├── bear_researcher.py      # 看空研究员
+│   │   ├── decision_maker.py       # 投资决策Agent
+│   │   └── investors/              # 投资者人格Agent
+│   │
+│   ├── mcp/                # MCP协议工具服务器
+│   │   └── stock_data_server.py    # 股票数据MCP Server
+│   │
 │   ├── web/                 # Web服务模块
 │   │   ├── web_server.py            # Web服务器和路由控制
 │   │   ├── auth_middleware.py       # 认证中间件

@@ -14,6 +14,11 @@ from .sentiment_analyst import SentimentAnalystAgent
 from .bull_researcher import BullResearcherAgent
 from .bear_researcher import BearResearcherAgent
 
+try:
+    from .investors import InvestorCoordinator
+except ImportError:
+    pass
+
 __all__ = [
     'StockAnalysisState',
     'CoordinatorAgent',

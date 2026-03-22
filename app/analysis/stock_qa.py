@@ -367,7 +367,37 @@ class StockQA:
         """搜索股票相关新闻和实时信息"""
         try:
             self.logger.info(f"搜索股票新闻: {query}")
-            
+
+            # 优先使用统一搜索接口
+            try:
+                from app.core.search import search_stock_news_unified
+                unified_results = search_stock_news_unified(stock_code, stock_name, max_results=5)
+                if unified_results:
+                    # 转换为本方法的返回格式
+                    formatted = []
+                    for item in unified_results[:5]:
+                        formatted.append({
+                            "title": item.get("title", ""),
+                            "date": item.get("date", ""),
+                            "source": item.get("source", ""),
+                            "snippet": item.get("content", ""),
+                            "link": item.get("url", item.get("link", ""))
+                        })
+                    summary_text = ""
+                    for i, item in enumerate(formatted):
+                        summary_text += f"{i+1}、{item.get('title', '')}\n"
+                        summary_text += f"{item.get('snippet', '')}\n"
+                        summary_text += f"来源: {item.get('source', '')} {item.get('date', '')}\n\n"
+                    return {
+                        "message": f"找到 {len(formatted)} 条相关新闻（统一搜索）",
+                        "results": formatted,
+                        "summary": summary_text
+                    }
+            except ImportError:
+                pass  # search模块未安装，使用原有搜索逻辑
+            except Exception as e:
+                self.logger.warning(f"统一搜索失败，降级到原有搜索: {e}")
+
             # 确定市场名称
             market_name = "A股" if market_type == 'A' else "港股" if market_type == 'HK' else "美股"
             

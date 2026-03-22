@@ -2309,6 +2309,35 @@ def delete_agent_analysis():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/agent_pending_approvals', methods=['GET'])
+def get_pending_approvals():
+    """获取待人工审批的Agent决策"""
+    try:
+        from app.agents.hitl import approval_manager
+        pending = approval_manager.get_pending_approvals()
+        return jsonify({'approvals': pending})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/agent_submit_approval', methods=['POST'])
+def submit_agent_approval():
+    """提交人工审批结果"""
+    try:
+        from app.agents.hitl import approval_manager
+        data = request.json
+        task_id = data.get('task_id')
+        approved = data.get('approved', False)
+        feedback = data.get('feedback', '')
+        if not task_id:
+            return jsonify({'error': '请提供task_id'}), 400
+        success = approval_manager.submit_approval(task_id, approved, feedback)
+        if success:
+            return jsonify({'message': '审批已提交', 'approved': approved})
+        return jsonify({'error': '未找到待审批任务'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/active_tasks', methods=['GET'])
 def get_active_tasks():
@@ -2330,6 +2359,33 @@ def get_active_tasks():
         return custom_jsonify({'active_tasks': active_tasks_list})
     except Exception as e:
         app.logger.error(f"获取活动任务时出错: {traceback.format_exc()}")
+        return jsonify({'error': str(e)}), 500
+
+
+# ===== MCP 工具服务端点 =====
+
+@app.route('/api/mcp/tools', methods=['GET'])
+def mcp_list_tools():
+    """列出MCP可用工具"""
+    try:
+        from app.mcp.stock_data_server import MCP_SERVER_CONFIG
+        return jsonify(MCP_SERVER_CONFIG)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/mcp/call', methods=['POST'])
+def mcp_call_tool():
+    """调用MCP工具"""
+    try:
+        from app.mcp.stock_data_server import handle_mcp_tool_call
+        data = request.json
+        tool_name = data.get('tool')
+        arguments = data.get('arguments', {})
+        if not tool_name:
+            return jsonify({'error': '请提供tool参数'}), 400
+        result = handle_mcp_tool_call(tool_name, arguments)
+        return jsonify({'result': result})
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 

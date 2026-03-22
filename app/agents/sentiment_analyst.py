@@ -42,6 +42,21 @@ class SentimentAnalystAgent:
             if client:
                 news_text = _format_news_for_prompt(relevant_news[:10])
 
+                # 联网搜索增强（DuckDuckGo/Tavily/SERP多源降级）
+                try:
+                    from app.core.search import search_stock_news_unified
+                    stock_name = ''
+                    if relevant_news:
+                        first = relevant_news[0]
+                        if isinstance(first, dict):
+                            stock_name = first.get('stock_name', '')
+                    web_results = search_stock_news_unified(stock_code, stock_name)
+                    if web_results:
+                        web_news_text = '\n'.join([f"[网络] {r.get('title','')}: {r.get('content','')[:100]}" for r in web_results[:3]])
+                        news_text = news_text + '\n\n--- 联网搜索补充 ---\n' + web_news_text
+                except Exception as e:
+                    logger.warning(f"联网搜索增强失败: {e}")
+
                 prompt = f"""你是资深舆情分析师。基于以下与股票 {stock_code} 相关的最新新闻，进行舆情分析：
 
 相关新闻数量: {len(relevant_news)}

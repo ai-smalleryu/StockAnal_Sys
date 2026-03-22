@@ -67,6 +67,15 @@ def build_analysis_graph(
         graph.add_edge(last_node, "risk")
         last_node = "risk"
 
+        # 投资者人格分析（可选，在风险评估后）
+        try:
+            from app.agents.investors.investor_coordinator import InvestorCoordinator
+            graph.add_node("investors", InvestorCoordinator.analyze)
+            graph.add_edge("risk", "investors")
+            last_node = "investors"
+        except ImportError:
+            pass  # 投资者模块未安装
+
     # 决策节点始终在最后
     graph.add_node("decision", DecisionMakerAgent.analyze)
     graph.add_edge(last_node, "decision")
@@ -113,6 +122,8 @@ def run_agent_analysis(
         'bull_case': None,
         'bear_case': None,
         'debate_summary': None,
+        'investor_opinions': None,
+        'investor_consensus': None,
         'risk_assessment': None,
         'final_decision': None,
         'execution_log': [],
@@ -120,9 +131,29 @@ def run_agent_analysis(
         'errors': [],
     }
 
+    # 发布分析开始事件
+    try:
+        from app.core.event_bus import get_event_bus, EVENT_ANALYSIS_STARTED
+        get_event_bus().publish(EVENT_ANALYSIS_STARTED, {'stock_code': stock_code})
+    except Exception:
+        pass
+
     try:
         result = graph.invoke(initial_state)
         logger.info(f"Agent分析完成: {stock_code}")
+
+        # 保存到Agent记忆 + 发布完成事件
+        try:
+            from app.core.agent_memory import get_agent_memory
+            from app.core.event_bus import get_event_bus, EVENT_ANALYSIS_COMPLETED
+            get_agent_memory().save_analysis(stock_code, result)
+            get_event_bus().publish(EVENT_ANALYSIS_COMPLETED, {
+                'stock_code': stock_code,
+                'decision': result.get('final_decision'),
+            })
+        except Exception:
+            pass
+
         return result
     except Exception as e:
         logger.error(f"Agent分析失败: {e}")
